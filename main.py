@@ -17,7 +17,7 @@ __date__	= "2023-12-26"
 __version__	= "0.1"
 __status__	= "dev"
 
-from config import *
+from local_config import *
 import os, sys
 import time
 from datetime import datetime
