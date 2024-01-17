@@ -1,2 +1,3 @@
 # bybit_monitor
 Bybit account and orders monitor. Using Pybit.
+This is a draft...
