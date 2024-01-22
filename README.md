@@ -1,6 +1,18 @@
 # bybit_monitor
-Bybit account and orders monitor. On Python. Using Pybit.
+
+For Bybit Crypto Exchange: Account / Orders / Coin Price monitor. In Python, using Pybit lib.
 
 https://github.com/sergeymusenko/bybit_monitor
 
-This is a draft...
+**THIS IS A DRAFT, sorry, not ready yet...**
+
+```
+Set of Trading Monitor Bots based on Pybit for Bybit Exchange:
+	- monitor-overview - Account Balance and all Positions/Orders
+	- monitor-price    - Price monitor Coin/USDT
+	- monitor-profit   - P&L of all Positions and Spot Limit Orders
+All bots could send Telegram notifications
+```
+
+**Installation:**
+> pip install pybit
