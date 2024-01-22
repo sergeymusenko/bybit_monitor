@@ -22,7 +22,7 @@ from termcolor import colored
 if __name__ == '__main__':
 	print(f'''\
 {colored("Set of Trading Monitor Bots based on Pybit for Bybit Exchange:", "light_yellow")}
-\t+ {colored("monitor-overview", "cyan")} - Account Balance and all Positions/Orders
+\t- {colored("monitor-overview", "cyan")} - Account Balance and all Positions/Orders
 \t- {colored("monitor-price", "cyan")}    - Price monitor Coin/USDT
 \t- {colored("monitor-profit", "cyan")}   - P&L of all Positions and Spot Limit Orders
 {colored("All bots could send Telegram notifications", "dark_grey")}\

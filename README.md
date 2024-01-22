@@ -8,9 +8,9 @@ https://github.com/sergeymusenko/bybit_monitor
 
 ```
 Set of Trading Monitor Bots based on Pybit for Bybit Exchange:
-	- monitor-overview - Account Balance and all Positions/Orders
-	- monitor-price    - Price monitor Coin/USDT
-	- monitor-profit   - P&L of all Positions and Spot Limit Orders
+	- `monitor-overview` - Account Balance and all Positions/Orders
+	- `monitor-price`    - Price monitor Coin/USDT
+	- `monitor-profit`   - P&L of all Positions and Spot Limit Orders
 All bots could send Telegram notifications
 ```
 
