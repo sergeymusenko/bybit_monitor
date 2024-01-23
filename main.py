@@ -4,6 +4,7 @@ Set of Trading Monitor Bots based using Pybit for Bybit Exchange
 docs: https://bybit-exchange.github.io/docs/v5/intro
 
 pip install pybit
+pip install getch
 """
 
 __project__	= "Trading Bot"

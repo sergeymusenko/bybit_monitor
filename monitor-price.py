@@ -4,6 +4,7 @@ monitor-coinprice.py - Price monitor Coin/USDT
 docs: https://bybit-exchange.github.io/docs/v5/intro
 
 pip install pybit
+pip install getch
 """
 
 __project__	= "Trading Bot"
@@ -20,6 +21,7 @@ __status__	= "dev"
 from config import *
 import os, sys
 import time
+from getch import getch
 from datetime import datetime
 from termcolor import colored
 from pybit.unified_trading import HTTP
@@ -37,13 +39,13 @@ precision = 1 # % close, notify if so
 checklist = {
 	'TIAUSDT': [ 19.02 ],
 	'DOTUSDT': [ 7.75 ],
+	'INJUSDT':[ 15, 9, 4 ],
 	'ETHUSDT': [ 3000 ],
 	'LTCUSDT': [ 69 ],
 	'OPUSDT': [ 3.2 ],
 	'ARBUSDT': [ 2.1 ],
 	'BEAMUSDT': [ 0.0178 ],
 	'SUIUSDT':[ 1.25 ],
-	'INJUSDT':[ 15, 9, 4 ],
 }
 
 
@@ -54,12 +56,19 @@ def main():
 
 	if not session:
 		print('Session init...')
-		session = HTTP(api_key=api_key, api_secret=api_secret)
+		try:
+			session = HTTP(api_key=api_key, api_secret=api_secret)
+		except Exception as e:
+			print(f"Open session: {str(e)}")
 
 	coin_cur_pice = {}
 	for symbol in checklist:
 		if symbol not in coin_cur_pice: # load once per symbol
-			ticker = session.get_tickers(category='spot', symbol=symbol)
+			try:
+				ticker = session.get_tickers(category='spot', symbol=symbol)
+			except Exception as e:
+				print(f"\nGetting ticker: {str(e)}\n")
+				continue
 			coin_cur_pice[symbol] = float(ticker['result']['list'][0]['lastPrice'])
 		cur_price = coin_cur_pice[symbol]
 		print(f"{symbol:10} PRC: {cur_price}")
@@ -80,8 +89,16 @@ if __name__ == '__main__':
 		print(f'\nSleep {sleep_time} sec...', end='')
 		sys.stdout.flush()
 		try:
-			time.sleep(sleep_time)
-		except KeyboardInterrupt:
+			s = sleep_time * 2
+			while s>0:
+				key = ord(getch())
+				if key == 10: # reload now
+					break
+				elif key == 27: # exit
+					raise KeyboardInterrupt()
+				time.sleep(0.5)
+				s -= 1
+		except KeyboardInterrupt: # exit on Ctrl+C
 			print(f"\r{'Bye...':20}")
 			break
 

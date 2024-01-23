@@ -4,6 +4,7 @@ monitor-overview.py - Account Balance and Positions/Orders
 docs: https://bybit-exchange.github.io/docs/v5/intro
 
 pip install pybit
+pip install getch
 """
 
 __project__	= "Trading Bot"
@@ -20,6 +21,7 @@ __status__	= "dev"
 from config import *
 import os, sys
 import time
+from getch import getch
 from datetime import datetime
 from termcolor import colored
 from pybit.unified_trading import HTTP
@@ -138,8 +140,16 @@ if __name__ == '__main__':
 		print(f'\nSleep {sleep_time} sec...', end='')
 		sys.stdout.flush()
 		try:
-			time.sleep(sleep_time)
-		except KeyboardInterrupt:
+			s = sleep_time * 2
+			while s>0:
+				key = ord(getch())
+				if key == 10: # reload now
+					break
+				elif key == 27: # exit
+					raise KeyboardInterrupt()
+				time.sleep(0.5)
+				s -= 1
+		except KeyboardInterrupt: # exit on Ctrl+C
 			print(f"\r{'Bye...':20}")
 			break
 
