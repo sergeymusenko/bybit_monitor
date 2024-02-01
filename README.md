@@ -4,7 +4,8 @@ For Bybit Crypto Exchange: Account / Orders / Coin Price monitor. In Python, usi
 
 https://github.com/sergeymusenko/bybit_monitor
 
-**THIS IS A DRAFT, sorry, not ready yet...**
+**THIS IS A DRAFT, sorry, not ready yet...**<br/>
+I will implement Websockets later.
 
 Set of Trading Monitor Bots based on Pybit for Bybit Exchange:
 

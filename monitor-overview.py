@@ -12,13 +12,14 @@ __part__	= 'Account Balance and Positions/Orders'
 __author__	= "Sergey V Musenko"
 __email__	= "sergey@musenko.com"
 __copyright__= "© 2024, musenko.com"
-__license__	= "GPL"
+__license__	= "MIT"
 __credits__	= ["Sergey Musenko"]
 __date__	= "2024-01-18"
 __version__	= "0.1"
 __status__	= "dev"
 
 from config import *
+from functions import *
 import os, sys
 import time
 from getch import getch
@@ -42,12 +43,13 @@ def pnl_colored(pnl): return colored(f"{pnl:<8}", 'red' if pnl < 0 else 'green')
 
 def main():
 	global session
-	os.system('clear')
-	print(f'🔥 {__part__}')
+	time_mark = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 
-	if not session:
-		print('Session init...')
-		session = HTTP(api_key=api_key, api_secret=api_secret)
+	os.system('clear')
+	print(f'🔥 {time_mark} {__part__}')
+
+	print(' loading...\r', end='')
+	session = HTTP(api_key=api_key, api_secret=api_secret)
 
 	# get balance... not all...
 	session = HTTP(api_key=api_key, api_secret=api_secret)
@@ -137,21 +139,19 @@ def main():
 if __name__ == '__main__':
 	while True:
 		main()
-		print(f'\nSleep {sleep_time} sec...', end='')
 		sys.stdout.flush()
 		try:
-			s = sleep_time * 2
+			s = sleep_time
 			while s>0:
-				key = ord(getch())
+				print(f'  Sleep {s} sec... \r', end='')
+				key = input_timeout()
 				if key == 10: # reload now
 					break
 				elif key == 27: # exit
 					raise KeyboardInterrupt()
-				time.sleep(0.5)
 				s -= 1
 		except KeyboardInterrupt: # exit on Ctrl+C
 			print(f"\r{'Bye...':20}")
 			break
 
 # that's all folks!
-
