@@ -127,7 +127,8 @@ def main():
 			posorders = positionords_arr.pop(symbol)
 			for po in posorders:
 				print(f"\t\t{po}")
-			print()
+		print()
+
 	if positionords_arr: # not all being printed
 		print('FUTURES to open:')
 		for symbol in positionords_arr:

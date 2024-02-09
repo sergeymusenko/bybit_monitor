@@ -38,18 +38,29 @@ session = False
 precision = 1 # % close, notify if so
 
 checklist = {
+	'ATOMUSDT': [[8.5, 6.5],	'invest x10, 10-20%dep'],
+	'FLOWUSDT': [[0.69, 0.45],	'invest x40, 2%dep'], # Disney, Pixar, NBA, Bibnance,
+	'NEARUSDT': [[2.27, 1.06],	'invest x11'],
+	'DOTUSDT':	[[5.5, 3.8],	'invest x8'],
+#	'TKOUSDT':	[[0.3],			'invest x30'], # binance
+	'INJUSDT':	[[33.32],		'get short'],
+#	'INJUSDT':	[[15, 9, 4],	'invest'],
 #	'TIAUSDT': [[19.02],	'close TIA'],
-#	'DOTUSDT': [[7.75],		'close DOT'],
-#	'BTCUSDT': [[37400, 34400, 33100, 52300, 41700], 'invest'],
-	'TWTUSDT': [[0.9, 0.63, 0.34], 'invest... may be'],
-	'INJUSDT': [[15, 9, 4],	'get long'],
-	'LTCUSDT': [[69],		'get long'],
+#	'LTCUSDT': [[69],		'get long'],
+#	'TWTUSDT': [[0.9, 0.63, 0.34], 'invest... may be'],
 #	'OPUSDT':  [[3.2],		'get long'],
 #	'ARBUSDT': [[2.1],		'get long'],
 #	'BEAMUSDT':[[0.0178],	'get long'],
 #	'SUIUSDT': [[1.25],		'get long'],
+#	'BTCUSDT': [[52300, 41700, 37400, 34400, 33100 ], 'invest'],
 }
-
+''' Petrenko:
+	FLM		BLUR	ING		BNB
+	XVS		FLR		HIGH	BONK
+	BEAM	SOL		FXS		KEY
+	XVS		ATOM	DOT		ARB
+	AI		HOT		AXS
+'''
 
 def main():
 	global session

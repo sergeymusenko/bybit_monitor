@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """\
-monitor-profit.py - P&L of all Positions and Spot Limit Orders
+monitor-profit.py - P&L at Bybit
 docs: https://bybit-exchange.github.io/docs/v5/intro
 
 pip install pybit
-pip install getch
+
+error time to time:
+	Added 2.5 seconds to recv_window. 2 retries remain.
+	2024-02-07 20:03:15 - pybit._http_manager - ERROR - invalid request, please check your
+	server timestamp or recv_window param.
+	req_timestamp[1707328989637],server_timestamp[1707328995183],recv_window[5000]
+	(ErrCode: 10002).
 """
 
 __project__	= "Trading Bot"
-__part__	= 'P&L of Futures and Spot Orders'
+__part__	= 'P&L at Bybit' # Futures only
 __author__	= "Sergey V Musenko"
 __email__	= "sergey@musenko.com"
 __copyright__= "© 2024, musenko.com"
 __license__	= "MIT"
 __credits__	= ["Sergey Musenko"]
 __date__	= "2024-01-18"
-__version__	= "0.1"
+__version__	= "0.2"
 __status__	= "dev"
 
 from config import *
@@ -26,6 +32,7 @@ from datetime import datetime
 from termcolor import colored
 from pybit.unified_trading import HTTP
 from simple_telegram import *
+import statistics
 
 # get my secret LOCAL_CONFIG:
 import socket
@@ -35,30 +42,32 @@ if socket.gethostname() == 'sereno':
 
 def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else 'green')
 
-def pnl_colored(pnl): return colored(f"{pnl:<8}", 'light_red' if pnl < 0 else 'green')
+def pnl_colored(pnl, l=7, d=3): return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green')
 
+def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'green' if tp > 0 else None)
+
+def liq_colored(liq, l=6, d=2, prc=0):
+	global min_PnL
+	_alarm = ['blink'] if prc > 0 and liq > 0 and (1 - prc/liq) < min_PnL/100 else None
+	return colored(f"{liq:<{l}.{d}f}", ('light_red' if _alarm else 'yellow') if liq else None, attrs=_alarm)
+
+
+pnl_avg = {}
+pnl_avg_len = 5 # collect avg for {n} last pnl values
 alarms_lowest = {}
 
 def main():
-	global session, alarms_lowest
+	global alarms_lowest, pnl_avg, pnl_avg_len
 	time_mark = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 
-	spotords = False
-	spot_profit = 0
 	positions = False
 	pos_profit = 0
 
 	print(f'{"  loading...":40}\r', end='', flush=True)
-	session = HTTP(api_key=api_key, api_secret=api_secret)
-
-	# get spot orders
-	if check_spot:
-		try:
-			spotords = session.get_open_orders(category='spot', settleCoin="USDT" )
-		except Exception:
-			print('Sorry, Spot read error, retry after sleep')
-			send_to_telegram(TMapiToken, TMchatID, 'Connection lost', print_exception=False)
-			return
+	try:
+		session = HTTP(api_key=api_key, api_secret=api_secret)
+	except Exception:
+		print('\nSorry, HTTP session error')
 
 	# GET PSITIONS, category: spot, linear, inverse, option
 	try:
@@ -72,45 +81,6 @@ def main():
 	os.system('clear')
 	print(f'🔥 {time_mark} {__part__}')
 
-	# SPOT orders
-	if spotords and spotords['result']['list']:
-		print('SPOT:')
-		coin_cur_pice = {}
-		coin_orders = {}
-		for spot in spotords['result']['list']:
-			# 'createdTime': '1705942060763', 'updatedTime': '1705942060765',
-			ordid = str(spot['orderId'])
-			side = side_colored(spot['side'])
-			sign = sign_sell if spot['side'] == 'Sell' else sign_buy
-			symbol = spot['symbol']
-			otype = spot['orderType']
-			price = float(spot['price'] or 0)
-			qty = float(spot['qty'] or 0)
-			val = price * qty
-			# current price
-			if symbol not in coin_cur_pice: # load once per symbol
-				ticker = session.get_tickers(category='spot', symbol=symbol)
-				coin_cur_pice[symbol] = float(ticker['result']['list'][0]['lastPrice'])
-			cur_price = coin_cur_pice[symbol]
-			reverse = -1 if spot['side'] == 'Sell' else 1
-			pnl = reverse * (cur_price * qty - val)
-			spot_profit += pnl
-			pnl = pnl_colored(round(pnl, 4))
-
-			if symbol not in coin_orders:
-				coin_orders[symbol] = []
-			coin_orders[symbol].append([
-				price,
-				f"\t{sign} {symbol:10} P&L: {pnl:<10} QTY: {round(qty,4):<8} PRC: {round(price,4):<8} USDT: {round(val,4):<10}TYP: {otype}"
-			])
-
-		# print out sorted
-		for symbol in coin_orders:
-			coin_orders[symbol].sort(reverse=True, key=lambda x: x[0])
-			for order in coin_orders[symbol]:
-				print(order[1])
-		print(f"TOTAL SPOT P&L: {pnl_colored(round(spot_profit, 4))}\n")
-
 	# positions
 	if positions and positions['result']['list']:
 		alarms = []
@@ -121,52 +91,66 @@ def main():
 			side = side_colored(pos['side'])
 			sign = sign_sell if pos['side'] == 'Sell' else sign_buy
 			symbol = pos['symbol']
+			symbolside = pos['symbol'] + pos['side']
 			val = float(pos['positionValue'] or 0)
-			mark = float(pos['markPrice'] or 0)
+			prc = float(pos['markPrice'] or 0)
 			pnl = float(pos['unrealisedPnl'] or 0)
+			liq = float(pos['liqPrice'] or 0)
+
+			pnl_direction = colored('-', 'light_blue') # mark pnl change side
+			if symbolside in pnl_avg:
+				symbolside_pnl_avg = statistics.fmean(pnl_avg[symbolside])
+				if pnl != symbolside_pnl_avg:
+					pnl_direction = colored('↗', 'green') if pnl > symbolside_pnl_avg  else colored('↘', 'light_red') # ↑↓
+			else:
+				pnl_avg[symbolside] = [] # init avg collection list
+			if len(pnl_avg[symbolside]) >= pnl_avg_len: # keep {n} last elements in list
+				pnl_avg[symbolside].pop(0) # remove oldest element
+			pnl_avg[symbolside].append(pnl) # save pnl as last element
+
 			pos_profit += pnl
 			mark_alarmed = ''
 			pnl_alarm = min_PnL * val / 100
-			if pnl < pnl_alarm:
-				if symbol not in alarms_lowest:
-					alarms_lowest[symbol] = pnl_alarm # first time
-				if pnl < alarms_lowest[symbol]: # new minimum found! notify again
-					alarms_lowest[symbol] = pnl
+			liq_alarm = 1 if liq > 0 and (1 - prc/liq) < min_PnL/100 else None
+			if pnl < pnl_alarm or liq_alarm:
+				if symbolside not in alarms_lowest:
+					alarms_lowest[symbolside] = pnl_alarm # first time
+				if pnl < alarms_lowest[symbolside]: # new minimum found! notify again
+					alarms_lowest[symbolside] = pnl
 					alarms.append(f'{sign} {symbol} PnL: {pnl}')
 					mark_alarmed = f'{sign_alarm} '
-			pnl = pnl_colored(round(pnl, 4))
+			PnL = pnl_colored(pnl, 8, 3)
 			rpnl = float(pos['cumRealisedPnl'] or 0)
-			tp = float(pos['takeProfit'] or 0)
-			sl = float(pos['stopLoss'] or 0)
-			liq = float(pos['liqPrice'] or 0)
+			liq = liq_colored(round(liq, 2), prc=prc)
+			tp = tp_colored(round(float(pos['takeProfit'] or 0), 2))
+			sl = liq_colored(round(float(pos['stopLoss'] or 0), 2))
 			created = int(pos['createdTime'])
 
 			coin_orders.append([
 				pnl,
-				f"\t{sign} {symbol:10} PnL: {mark_alarmed}{pnl:<6} VAL: {round(val, 2):<8} PRC: {round(mark, 2):<6} TP: {round(tp, 2):<8} SL: {round(sl, 2):<8} LIQ: {round(liq, 2)}"
+				f"{side} {symbol:12} PnL: {pnl_direction} {mark_alarmed}{PnL} VAL: {round(val, 2):<8} PRC: {round(prc, 2):<6} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
-		# print out sorted
+		# print out sorted, losers first
 		coin_orders.sort(key=lambda x: x[0])
+		i = 1
 		for order in coin_orders:
-			print(order[1])
-		print(f"TOTAL FUTURES P&L: {pnl_colored(round(pos_profit, 4))}\n")
+			print(f"{str(i)+'.':<3}{order[1]}")
+			i += 1
+		print(f"TOTAL FUTURES P&L: {pnl_colored(pos_profit, 8, 3)}\n")
 
 		if alarms: # send Telegram message
 			message = f'{sign_alarm} <b>Bybit Futures Alarm:</b>'
+			i = 1
 			for al in alarms:
-				message += f"\n{al}"
+				message += f"\n{i}. {al}"
+				i += 1
 			send_to_telegram(TMapiToken, TMchatID, message)
-
-	# spot+positions total
-	if spot_profit !=0 and pos_profi != 0:
-		total = spot_profit + pos_profit
-		print(f"TOTAL P&L: {pnl_colored(round(total, 4))}\n")
-	elif spot_profit == 0 and pos_profit == 0:
-		print('nothing...')
 
 
 if __name__ == '__main__':
+	# send_to_telegram(TMapiToken, TMchatID, 'start')
+
 	while True:
 		main()
 		sys.stdout.flush()

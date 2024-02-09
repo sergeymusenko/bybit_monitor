@@ -16,7 +16,7 @@ __status__	= "dev"
 
 
 sleep_time = 60 # seconds
-min_PnL = -5 # min PnL, in % of position val
+min_PnL = -10 # min PnL, in % of position val
 check_spot = False
 
 sign_buy  = '🟢'
