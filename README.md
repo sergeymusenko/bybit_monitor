@@ -17,3 +17,5 @@ All bots could send Telegram notifications
 
 **Installation:**
 > `pip install pybit`
+
+<img src="monitor-profit_console_ver.png" alt="Console version">
