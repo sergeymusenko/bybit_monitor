@@ -42,7 +42,7 @@ if socket.gethostname() == 'sereno':
 
 def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else 'green')
 
-def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'green' if tp > 0 else None)
+def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'cyan' if tp > 0 else None)
 
 def pnl_colored(pnl, l=7, d=3, alarm=False):
 	return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
@@ -80,7 +80,7 @@ def main():
 
 	# start printout
 	os.system('clear')
-	print(f'🔥 {time_mark} {__part__}, Min Profit: {min_PnL}%')
+	print(f'{time_mark} {__part__}, Min Profit: {min_PnL}%')
 
 	# positions
 	if positions and positions['result']['list']:
