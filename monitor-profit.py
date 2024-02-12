@@ -42,9 +42,10 @@ if socket.gethostname() == 'sereno':
 
 def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else 'green')
 
-def pnl_colored(pnl, l=7, d=3): return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green')
-
 def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'green' if tp > 0 else None)
+
+def pnl_colored(pnl, l=7, d=3, alarm=False):
+	return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
 
 def liq_colored(liq, l=6, d=2, prc=0):
 	global min_PnL
@@ -73,18 +74,17 @@ def main():
 	try:
 		positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
 	except Exception:
-		print('Sorry, Futures read error, retry after sleep')
+		print('Sorry, read error, retry after sleep')
 		send_to_telegram(TMapiToken, TMchatID, 'Connection lost', print_exception=False)
 		return
 
 	# start printout
 	os.system('clear')
-	print(f'🔥 {time_mark} {__part__}')
+	print(f'🔥 {time_mark} {__part__}, Min Profit: {min_PnL}%')
 
 	# positions
 	if positions and positions['result']['list']:
 		alarms = []
-		print('FUTURES:')
 		coin_orders = []
 		for pos in positions['result']['list']:
 			seq = str(pos['seq'])
@@ -109,35 +109,35 @@ def main():
 			pnl_avg[symbolside].append(pnl) # save pnl as last element
 
 			pos_profit += pnl
-			mark_alarmed = ''
+			mark_alarmed = False
 			pnl_alarm = min_PnL * val / 100
-			liq_alarm = 1 if liq > 0 and (1 - prc/liq) < min_PnL/100 else None
+			liq_alarm = False # 1 if liq > 0 and (1 - prc/liq) < min_PnL/100 else None ----------------
 			if pnl < pnl_alarm or liq_alarm:
 				if symbolside not in alarms_lowest:
 					alarms_lowest[symbolside] = pnl_alarm # first time
 				if pnl < alarms_lowest[symbolside]: # new minimum found! notify again
 					alarms_lowest[symbolside] = pnl
 					alarms.append(f'{sign} {symbol} PnL: {pnl}')
-					mark_alarmed = f'{sign_alarm} '
-			PnL = pnl_colored(pnl, 8, 3)
+				mark_alarmed = True
+			PnL = pnl_colored(pnl, 8, 3, mark_alarmed)
 			rpnl = float(pos['cumRealisedPnl'] or 0)
-			liq = liq_colored(round(liq, 2), prc=prc)
+			liq = liq_colored(round(liq, 2)) # , prc=prc) -----------------
 			tp = tp_colored(round(float(pos['takeProfit'] or 0), 2))
 			sl = liq_colored(round(float(pos['stopLoss'] or 0), 2))
 			created = int(pos['createdTime'])
 
 			coin_orders.append([
 				pnl,
-				f"{side} {symbol:12} PnL: {pnl_direction} {mark_alarmed}{PnL} VAL: {round(val, 2):<8} PRC: {round(prc, 2):<6} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{side} {symbol:12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8} PRC: {round(prc, 2):<6} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, losers first
 		coin_orders.sort(key=lambda x: x[0])
 		i = 1
 		for order in coin_orders:
-			print(f"{str(i)+'.':<3}{order[1]}")
+			print(f"{str(i):>2}. {order[1]}")
 			i += 1
-		print(f"TOTAL FUTURES P&L: {pnl_colored(pos_profit, 8, 3)}\n")
+		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}\n")
 
 		if alarms: # send Telegram message
 			message = f'{sign_alarm} <b>Bybit Futures Alarm:</b>'
@@ -159,7 +159,7 @@ if __name__ == '__main__':
 			while s>0:
 				print(f'  Sleep {s} sec... \r', end='')
 				key = input_timeout() # it makes sleep 1s
-				if key == 10: # reload now
+				if key == 10 or key == 32: # reload now
 					break
 				elif key == 27: # exit
 					raise KeyboardInterrupt
