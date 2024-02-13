@@ -130,7 +130,6 @@ def main():
 		for order in coin_orders:
 			print(f"{str(i):>2}. {order[1]}")
 			i += 1
-		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}")
 
 		# send alarms as Telegram message
 		if alarms_list:
@@ -143,17 +142,23 @@ def main():
 
 	# now get deposit margin
 	try:
+		margin = ''
 		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
 		atype = depo['accountType']
 		# wallet = float(depo['totalWalletBalance'])
 		marginbalance = float(depo['totalMarginBalance'])
-		margininitial = float(depo['totalInitialMargin'])
-		margininitialpercent = 100 * margininitial / marginbalance
 		#marginmaintenance = 100 * (float(depo['totalMaintenanceMargin']) / marginbalance)
-		print(f"Margin: {round(marginbalance, 2)}, Available: {round(marginbalance - margininitial, 2)}, Used: {round(margininitialpercent, 2)}%")
+		marginini = float(depo['totalInitialMargin'])
+		margininipcnt = round(100 * marginini / marginbalance, 2)
+		margininipcntclr = 'light_red' if margininipcnt >= 50 else 'yellow' if margininipcnt >= 30 else 'cyan' if margininipcnt >= 10 else 'green'
+		margin = f"Margin: {round(marginbalance, 2)}, Available: {round(marginbalance - marginini, 2)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}"
 	except Exception:
 		print('Error get_wallet_balance()')
+
+	# print TOTAL
+	print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3):<20}{margin}")
 	print()
+
 
 if __name__ == '__main__':
 	# send_to_telegram(TMapiToken, TMchatID, 'start')
