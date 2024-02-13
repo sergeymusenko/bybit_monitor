@@ -56,9 +56,10 @@ def main():
 
 	print(f'{"  loading...":40}\r', end='', flush=True)
 
-	# GET PSITIONS, category: spot, linear, inverse, option
+	# GET PSITIONS (category: spot, linear, inverse, option)
 	try:
 		session = HTTP(api_key=api_key, api_secret=api_secret)
+		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
 		positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
 	except Exception:
 		print('Sorry, read error, retry after sleep')
@@ -68,6 +69,16 @@ def main():
 	# start printout
 	os.system('clear')
 	print(f'{time_mark} {__part__}, Profit Alert: {min_PnL}%, all in USDT:')
+
+	# deposit margin
+	atype = depo['accountType']
+	# wallet = float(depo['totalWalletBalance'])
+	marginbalance = float(depo['totalMarginBalance'])
+	#marginmaintenance = 100 * (float(depo['totalMaintenanceMargin']) / marginbalance)
+	marginini = float(depo['totalInitialMargin'])
+	margininipcnt = round(100 * marginini / marginbalance, 2)
+	margininipcntclr = 'light_red' if margininipcnt >= 50 else 'yellow' if margininipcnt >= 30 else 'cyan' if margininipcnt >= 10 else 'green'
+	print(f"Margin: {round(marginbalance, 2)}, Available: {colored(round(marginbalance - marginini, 2), margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}")
 
 	# positions
 	pos_profit = 0
@@ -130,6 +141,7 @@ def main():
 		for order in coin_orders:
 			print(f"{str(i):>2}. {order[1]}")
 			i += 1
+		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}")
 
 		# send alarms as Telegram message
 		if alarms_list:
@@ -140,23 +152,6 @@ def main():
 				i += 1
 			send_to_telegram(TMapiToken, TMchatID, message)
 
-	# now get deposit margin
-	try:
-		margin = ''
-		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
-		atype = depo['accountType']
-		# wallet = float(depo['totalWalletBalance'])
-		marginbalance = float(depo['totalMarginBalance'])
-		#marginmaintenance = 100 * (float(depo['totalMaintenanceMargin']) / marginbalance)
-		marginini = float(depo['totalInitialMargin'])
-		margininipcnt = round(100 * marginini / marginbalance, 2)
-		margininipcntclr = 'light_red' if margininipcnt >= 50 else 'yellow' if margininipcnt >= 30 else 'cyan' if margininipcnt >= 10 else 'green'
-		margin = f"Margin: {round(marginbalance, 2)}, Available: {round(marginbalance - marginini, 2)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}"
-	except Exception:
-		print('Error get_wallet_balance()')
-
-	# print TOTAL
-	print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3):<20}{margin}")
 	print()
 
 
