@@ -5,12 +5,9 @@ docs: https://bybit-exchange.github.io/docs/v5/intro
 
 pip install pybit
 
-error time to time:
-	Added 2.5 seconds to recv_window. 2 retries remain.
-	2024-02-07 20:03:15 - pybit._http_manager - ERROR - invalid request, please check your
-	server timestamp or recv_window param.
-	req_timestamp[1707328989637],server_timestamp[1707328995183],recv_window[5000]
-	(ErrCode: 10002).
+server time error:
+	pybit._http_manager - ERROR - invalid request, please check your server timestamp or recv_window param.
+	req_timestamp[1707815756893],server_timestamp[1707815762060],recv_window[5000] (ErrCode: 10002).
 """
 
 __project__	= "Trading Bot"
@@ -44,13 +41,9 @@ def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else
 
 def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'cyan' if tp > 0 else None)
 
-def pnl_colored(pnl, l=7, d=3, alarm=False):
-	return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
+def pnl_colored(pnl, l=7, d=3, alarm=False): return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
 
-def liq_colored(liq, l=6, d=2, prc=0):
-	global min_PnL
-	_alarm = ['blink'] if prc > 0 and liq > 0 and (1 - prc/liq) < min_PnL/100 else None
-	return colored(f"{liq:<{l}.{d}f}", ('light_red' if _alarm else 'yellow') if liq else None, attrs=_alarm)
+def liq_colored(liq, l=6, d=2, alarm=False): return colored(f"{liq:<{l}.{d}f}", None if not liq else ('light_red' if alarm else 'yellow'), attrs=(['blink'] if alarm else None))
 
 
 pnl_avg = {}
@@ -58,20 +51,14 @@ pnl_avg_len = 5 # collect avg for {n} last pnl values
 alarms_lowest = {}
 
 def main():
-	global alarms_lowest, pnl_avg, pnl_avg_len
+	global alarms_lowest, pnl_avg, pnl_avg_len, min_PnL, min_LIQ
 	time_mark = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 
-	positions = False
-	pos_profit = 0
-
 	print(f'{"  loading...":40}\r', end='', flush=True)
-	try:
-		session = HTTP(api_key=api_key, api_secret=api_secret)
-	except Exception:
-		print('\nSorry, HTTP session error')
 
 	# GET PSITIONS, category: spot, linear, inverse, option
 	try:
+		session = HTTP(api_key=api_key, api_secret=api_secret)
 		positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
 	except Exception:
 		print('Sorry, read error, retry after sleep')
@@ -80,12 +67,13 @@ def main():
 
 	# start printout
 	os.system('clear')
-	print(f'{time_mark} {__part__}, Min Profit: {min_PnL}%')
+	print(f'{time_mark} {__part__}, Profit Alert: {min_PnL}%, all in USDT:')
 
 	# positions
+	pos_profit = 0
+	alarms_list = []
+	coin_orders = []
 	if positions and positions['result']['list']:
-		alarms = []
-		coin_orders = []
 		for pos in positions['result']['list']:
 			seq = str(pos['seq'])
 			side = side_colored(pos['side'])
@@ -96,8 +84,11 @@ def main():
 			prc = float(pos['markPrice'] or 0)
 			pnl = float(pos['unrealisedPnl'] or 0)
 			liq = float(pos['liqPrice'] or 0)
+			created = int(pos['createdTime'])
+			pos_profit += pnl
 
-			pnl_direction = colored('-', 'light_blue') # mark pnl change side
+			# mark pnl change side, use avg per previos values
+			pnl_direction = colored('-', 'light_blue')
 			if symbolside in pnl_avg:
 				symbolside_pnl_avg = statistics.fmean(pnl_avg[symbolside])
 				if pnl != symbolside_pnl_avg:
@@ -108,45 +99,61 @@ def main():
 				pnl_avg[symbolside].pop(0) # remove oldest element
 			pnl_avg[symbolside].append(pnl) # save pnl as last element
 
-			pos_profit += pnl
-			mark_alarmed = False
-			pnl_alarm = min_PnL * val / 100
-			liq_alarm = False # 1 if liq > 0 and (1 - prc/liq) < min_PnL/100 else None ----------------
-			if pnl < pnl_alarm or liq_alarm:
+			# alarms, gather to `alarms` list then use it later to send Telegram message
+			liq_alarm = liq > 0 and abs(prc - liq)/max(prc, liq) < (min_LIQ/100) # liquidation alarm, use min_LIQ config
+			if liq_alarm:
+				alarms_list.append(f'{sign} {symbol} {min_LIQ}% to LIQUIDATION')
+
+			pnl_alarm = min_PnL * val / 100 # pnl alarm, use min_PnL config
+			if pnl < pnl_alarm:
 				if symbolside not in alarms_lowest:
 					alarms_lowest[symbolside] = pnl_alarm # first time
 				if pnl < alarms_lowest[symbolside]: # new minimum found! notify again
 					alarms_lowest[symbolside] = pnl
-					alarms.append(f'{sign} {symbol} PnL: {pnl}')
-				mark_alarmed = True
-			PnL = pnl_colored(pnl, 8, 3, mark_alarmed)
+					alarms_list.append(f'{sign} {symbol} PnL: {pnl}')
+
+			PnL = pnl_colored(pnl, 8, 3, pnl < pnl_alarm)
 			rpnl = float(pos['cumRealisedPnl'] or 0)
-			liq = liq_colored(round(liq, 2)) # , prc=prc) -----------------
+			liq = liq_colored(round(liq, 2), alarm=liq_alarm)
 			tp = tp_colored(round(float(pos['takeProfit'] or 0), 2))
 			sl = liq_colored(round(float(pos['stopLoss'] or 0), 2))
-			created = int(pos['createdTime'])
 
+			# gather positions here then sort by pnl and printout
 			coin_orders.append([
 				pnl,
 				f"{side} {symbol:12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8} PRC: {round(prc, 2):<6} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
-		# print out sorted, losers first
+		# print out sorted, loosers first
 		coin_orders.sort(key=lambda x: x[0])
 		i = 1
 		for order in coin_orders:
 			print(f"{str(i):>2}. {order[1]}")
 			i += 1
-		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}\n")
+		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}")
 
-		if alarms: # send Telegram message
+		# send alarms as Telegram message
+		if alarms_list:
 			message = f'{sign_alarm} <b>Bybit Futures Alarm:</b>'
 			i = 1
-			for al in alarms:
+			for al in alarms_list:
 				message += f"\n{i}. {al}"
 				i += 1
 			send_to_telegram(TMapiToken, TMchatID, message)
 
+	# now get deposit margin
+	try:
+		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
+		atype = depo['accountType']
+		# wallet = float(depo['totalWalletBalance'])
+		marginbalance = float(depo['totalMarginBalance'])
+		margininitial = float(depo['totalInitialMargin'])
+		margininitialpercent = 100 * margininitial / marginbalance
+		#marginmaintenance = 100 * (float(depo['totalMaintenanceMargin']) / marginbalance)
+		print(f"Margin: {round(marginbalance, 2)}, Available: {round(marginbalance - margininitial, 2)}, Used: {round(margininitialpercent, 2)}%")
+	except Exception:
+		print('Error get_wallet_balance()')
+	print()
 
 if __name__ == '__main__':
 	# send_to_telegram(TMapiToken, TMchatID, 'start')
