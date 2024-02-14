@@ -39,11 +39,11 @@ if socket.gethostname() == 'sereno':
 
 def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else 'green')
 
-def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.{d}f}", 'cyan' if tp > 0 else None)
+def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.0{d}f}", 'cyan' if tp > 0 else None)
 
-def pnl_colored(pnl, l=7, d=3, alarm=False): return colored(f"{pnl:<{l}.{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
+def pnl_colored(pnl, l=7, d=3, alarm=False): return colored(f"{pnl:<{l}.0{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
 
-def liq_colored(liq, l=6, d=2, alarm=False): return colored(f"{liq:<{l}.{d}f}", None if not liq else ('light_red' if alarm else 'yellow'), attrs=(['blink'] if alarm else None))
+def liq_colored(liq, l=6, d=2, alarm=False): return colored(f"{liq:<{l}.0{d}f}", None if not liq else ('light_red' if alarm else 'yellow'), attrs=(['blink'] if alarm else None))
 
 
 pnl_avg = {}
@@ -78,7 +78,8 @@ def main():
 	marginini = float(depo['totalInitialMargin'])
 	margininipcnt = round(100 * marginini / marginbalance, 2)
 	margininipcntclr = 'light_red' if margininipcnt >= 50 else 'yellow' if margininipcnt >= 30 else 'cyan' if margininipcnt >= 10 else 'green'
-	print(f"Margin: {round(marginbalance, 2)}, Available: {colored(round(marginbalance - marginini, 2), margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}")
+	marginavl = f"{round(marginbalance - marginini, 2):.02f}"
+	print(f"Margin: {round(marginbalance, 2):.02f}, Available: {colored(marginavl, margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}")
 
 	# positions
 	pos_profit = 0
@@ -132,7 +133,7 @@ def main():
 			# gather positions here then sort by pnl and printout
 			coin_orders.append([
 				pnl,
-				f"{side} {symbol:12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8} PRC: {round(prc, 2):<6} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{side} {symbol:12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, loosers first
