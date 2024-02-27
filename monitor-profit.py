@@ -46,6 +46,7 @@ def pnl_colored(pnl, l=7, d=3, alarm=False): return colored(f"{pnl:<{l}.0{d}f}",
 def liq_colored(liq, l=6, d=2, alarm=False): return colored(f"{liq:<{l}.0{d}f}", None if not liq else ('light_red' if alarm else 'yellow'), attrs=(['blink'] if alarm else None))
 
 
+
 pnl_avg = {}
 pnl_avg_len = 5 # collect avg for {n} last pnl values
 alarms_lowest = {}
@@ -84,23 +85,26 @@ def main():
 	marginavl = f"{round(marginbalance - marginini, 2):.02f}"
 	print(f"Margin: {round(marginbalance, 2):.02f}, Available: {colored(marginavl, margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}")
 
-	# positions
 	pos_profit = 0
 	alarms_list = []
-	coin_orders = []
+	close_list = []
+	position_orders = []
+
+	# proceed positions
 	if positions and positions['result']['list']:
 		for pos in positions['result']['list']:
-			seq = str(pos['seq'])
-			side = side_colored(pos['side'])
-			sign = sign_sell if pos['side'] == 'Sell' else sign_buy
 			symbol = pos['symbol']
-			symbolside = pos['symbol'] + pos['side']
+			side = pos['side']
+			sidemark = side_colored(side)
+			sign = sign_sell if side == 'Sell' else sign_buy
+			symbolside = symbol + side
 			val = float(pos['positionValue'] or 0)
 			prc = float(pos['markPrice'] or 0)
 			lvrg = float(pos['leverage'] or 0) # leverage = плечо
 			pnl = float(pos['unrealisedPnl'] or 0)
 			liq = float(pos['liqPrice'] or 0)
 			created = int(pos['createdTime'])
+			posIdx = pos['positionIdx'] # needed to close pos on loss
 			pos_profit += pnl
 
 			# mark pnl change side, use avg per previos values
@@ -128,6 +132,10 @@ def main():
 					alarms_lowest[symbolside] = pnl
 					alarms_list.append(f'{sign} {symbol} PnL: {pnl}')
 
+			kill_loss = min_Loss * val / 100 # pnl alarm, use min_PnL config
+			if min_Loss < 0 and pnl < kill_loss:
+				close_list.append([symbol, side, posIdx, pnl])
+
 			PnL = pnl_colored(pnl, 8, 3, pnl < pnl_alarm)
 			rpnl = float(pos['cumRealisedPnl'] or 0)
 			liq = liq_colored(round(liq, 2), alarm=liq_alarm)
@@ -135,25 +143,47 @@ def main():
 			sl = liq_colored(round(float(pos['stopLoss'] or 0), 2))
 
 			# gather positions here then sort by pnl and printout
-			coin_orders.append([
+			position_orders.append([
 				pnl,
-				f"{side} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{sidemark} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, loosers first
-		coin_orders.sort(key=lambda x: x[0])
+		position_orders.sort(key=lambda x: x[0])
 		i = 1
-		for order in coin_orders:
+		for order in position_orders:
 			print(f"{str(i):>2}. {order[1]}")
 			i += 1
 		print(f"TOTAL P&L: {pnl_colored(pos_profit, 8, 3)}")
 
-		# send alarms as Telegram message
+		# send alarms to Telegram
 		if alarms_list:
 			message = f'{sign_alarm} <b>Bybit Futures Alarm:</b>'
 			i = 1
 			for al in alarms_list:
 				message += f"\n{i}. {al}"
+				i += 1
+			send_to_telegram(TMapiToken, TMchatID, message)
+
+		# close loss positions and send to Telegram
+		if min_Loss < 0 and close_list:
+			message = "Close LOSS positions:"
+			print(f"\n{message}")
+			i = 1
+			for pos in close_list:
+				symbol, posside, positionIdx, pnl = pos
+				side = "Buy" if posside == 'Sell' else "Sell" # side contrary to position side
+				print(f"{i:2}. {side_colored(side)} {symbol} with PnL {pnl_colored(pnl)}... ", end='')
+				message += f"\n{i:2}. {side} {symbol} ... "
+				try:
+					################### kill position
+					session.place_order(category="linear", symbol=symbol, side=side, positionIdx=positionIdx, orderType="Market", qty="0", reduceOnly=True)
+					###################
+					print(colored('closed', 'red'))
+					message += "closed"
+				except Exception as ex:
+					print(f'ERROR {ex.status_code}, position NOT closed!')
+					message += "ERROR!"
 				i += 1
 #			send_to_telegram(TMapiToken, TMchatID, message)
 
