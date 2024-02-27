@@ -11,7 +11,7 @@ server time error:
 """
 
 __project__	= "Trading Bot"
-__part__	= 'P&L at Bybit' # Futures only
+__part__	= 'P&L @ Bybit' # Futures only
 __author__	= "Sergey V Musenko"
 __email__	= "sergey@musenko.com"
 __copyright__= "© 2024, musenko.com"
@@ -70,9 +70,9 @@ def main():
 
 	# start printout
 	os.system('clear')
-	mark_alert = ', alert if PnL'+colored(f"<{min_PnL}%", 'light_red') if min_PnL<0 else ""
-	mark_loss = ', kill if PnL'+colored(f"<{min_Loss}%", 'light_red') if min_Loss<0 else ""
-	print(f'{time_mark} {__part__}{mark_alert}{mark_loss}, all in USDT:')
+	mark_alert = '. Alert if PnL'+colored(f"<{min_PnL}%", 'light_red') if min_PnL<0 else ""
+	mark_loss = '. Kill if PnL'+colored(f"<{min_Loss}%", 'light_red') if min_Loss<0 else ""
+	print(f'{time_mark} {__part__}{mark_alert}{mark_loss}.')
 
 	# deposit margin
 	atype = depo['accountType']
@@ -83,7 +83,7 @@ def main():
 	margininipcnt = round(100 * marginini / marginbalance, 2)
 	margininipcntclr = 'light_red' if margininipcnt >= 50 else 'yellow' if margininipcnt >= 30 else 'cyan' if margininipcnt >= 10 else 'green'
 	marginavl = f"{round(marginbalance - marginini, 2):.02f}"
-	print(f"Margin: {round(marginbalance, 2):.02f}, Available: {colored(marginavl, margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}")
+	print(f"Margin: {round(marginbalance, 2):.02f}, Available: {colored(marginavl, margininipcntclr)}, Used: {colored(str(margininipcnt) + '%', margininipcntclr)}. All in USDT.")
 
 	pos_profit = 0
 	alarms_list = []
@@ -185,7 +185,7 @@ def main():
 					print(f'ERROR {ex.status_code}, position NOT closed!')
 					message += "ERROR!"
 				i += 1
-#			send_to_telegram(TMapiToken, TMchatID, message)
+			send_to_telegram(TMapiToken, TMchatID, message)
 
 	print()
 
