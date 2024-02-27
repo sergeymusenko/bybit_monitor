@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
+#
+# 1. Set Leverage
+# 2. Place Position Order
+# 3. Set TP/SL for Position
+# 4. Clear TP/SL for Position
+# 5. Close Position
+# 6. Get POSITIONS
+# 7. Get POSITION ORDERS (Limit, TP, SL)
 
 from config_local import *
 from termcolor import colored
 from pybit.unified_trading import HTTP
-#import pybit.exceptions
 
 
 session = HTTP(api_key=api_key, api_secret=api_secret)
 
 
-# *. Set Leverage ====================================
-if 0:
+# 1. Set Leverage ====================================================================
+if False:
 	symbol = "1000PEPEUSDT"
 	leverage = 10
 	try:
@@ -29,8 +36,8 @@ if 0:
 	exit(0)
 
 
-# *. Place Order Position ==========================================================
-if 0:
+# 2. Place Order Position ============================================================
+if False:
 	symbol = "1000PEPEUSDT" # min 100 1000PEPE, > $0.3
 	try:
 		res = session.place_order(
@@ -45,19 +52,16 @@ if 0:
 #			price="0.002",
 #			takeProfit="0.0028",
 #			stopLoss="0.0024",
-			takeProfit="",
-			stopLoss="",
 #			orderLinkId="lighty-futures-test-002",
 		)
-#Perps: if you pass qty="0" and reduceOnly="true", you can close the whole position of current symbol
 		print(res)
 	except Exception as ex:
 		print(ex)
 	exit(0)
 
 
-# *. Set TP/SL for Position ==========================================================
-if 0:
+# 3. Set TP/SL for Position ==========================================================
+if False:
 	symbol = "1000PEPEUSDT" # min 100 1000PEPE, > $0.3
 	try:
 		res = session.set_trading_stop(
@@ -75,8 +79,9 @@ if 0:
 			print(ex)
 	exit(0)
 
-# *. Clear TP/SL for Position ==========================================================
-if 0:
+
+# 4. Clear TP/SL for Position ========================================================
+if False:
 	symbol = "1000PEPEUSDT" # min 100 1000PEPE, > $0.3
 	try:
 		res = session.set_trading_stop(
@@ -95,10 +100,10 @@ if 0:
 	exit(0)
 
 
-# *. Close SHORT Position ==========================================================================
-# "side" must be AGAINST current position
+# 5. Close Position ==================================================================
+# "side" must be in OPPOSITE to current position
 # "positionIdx" must be SAME as current position
-if 0:
+if False:
 	symbol = "1000PEPEUSDT" # min 100 1000PEPE, > $0.3
 	try:
 		res = session.place_order(
@@ -119,7 +124,7 @@ if 0:
 	exit(0)
 
 
-# 1. GET POSITIONS (category: spot, linear, inverse, option) ====================================
+# 6. Get POSITIONS (category: spot, linear, inverse, option) =========================
 try:
 	print(colored('\nget_positions:', 'light_yellow'))
 	positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
@@ -154,7 +159,7 @@ session.get_positions: {
 '''
 
 
-# 2. Get POSITION ORDERS ======================================================================
+# 7. Get POSITION ORDERS (Limit, TP, SL) =============================================
 try:
 	print(colored('\nget_open_orders:', 'light_yellow'))
 	ords2print = []
@@ -166,7 +171,6 @@ try:
 			f"{ordr['side']:4} {ordr['symbol']:8} {ordr['orderType']:6} {ordr['createType'].replace('CreateBy', ''):12} QTY: {ordr['qty']:<7} PRC: {prc:<7.02f}",
 			ordr['symbol']
 		])
-
 	ords2print.sort(key=lambda x: x[0], reverse=True)
 	i = 1
 	cursymb = ''
@@ -215,3 +219,5 @@ except Exception:
 	'avgPrice': '','cancelType': 'UNKNOWN','placeType': '','cumExecFee': '0','cumExecQty': '0','cumExecValue': '0','isLeverage': '','marketUnit': '','orderIv': '','orderLinkId': '','positionIdx': 1,'timeInForce': 'IOC','price': '0','reduceOnly': True,'rejectReason': 'EC_NoError','slLimitPrice': '0','slTriggerBy': '','smpGroup': 0,'smpOrderId': '','smpType': 'None','stopLoss': '','stopOrderType': 'TakeProfit','takeProfit': '','tpLimitPrice': '0','tpslMode': 'Full','tpTriggerBy': '','triggerBy': 'LastPrice','blockTradeId': '',
 ]
 '''
+
+# that's all folks!
