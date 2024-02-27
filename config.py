@@ -15,21 +15,24 @@ __version__	= "0.1"
 __status__	= "dev"
 
 
-sleep_time	= 30 # seconds
-min_PnL		= -10 # min PnL, in % of position val, negative means loose
-min_LIQ		= 30 # min % to liquidation (prc / liq)
-check_spot	= False
+# main config
+sleep_time	= 15	# seconds
+min_LIQ		= 30	# min % to liquidation (prc / liq)
+min_PnL		= -8	# min PnL, in % of position val, negative means loss
+min_Loss	= -10	# PnL loss to kill position, 0/False means ignore
+
+
+# Bybit config -- PLEAS EKEEP IT SECURE! --
+api_key		= 'key'
+api_secret	= 'secret'
+
+
+# notify via Telegram, bot: 
+# Trading Monitor '@lightytrading_bot'
+TMapiToken	= '' # '' means do not send
+TMchatID	= '' # '' means DO NOT SEND
+
 
 sign_buy	= '🟢'
 sign_sell	= '🔴'
 sign_alarm	= '⚠'
-
-
-# Bybit config -- PLEAS EKEEP IT SECURE! --
-api_key = 'key'
-api_secret = 'secret'
-
-
-# notify via Telegram, bot: 
-TMapiToken = '' # '' means do not send
-TMchatID = '' # '' means DO NOT SEND

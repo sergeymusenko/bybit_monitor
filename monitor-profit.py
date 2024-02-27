@@ -34,12 +34,12 @@ import statistics
 # get my secret LOCAL_CONFIG:
 import socket
 if socket.gethostname() == 'sereno':
-	from local_config import *
+	from config_local import *
 
 
 def side_colored(side): return colored(f"{side:4}", 'red' if side == 'Sell' else 'green')
 
-def tp_colored(tp, l=6, d=2): return colored(f"{tp:<{l}.0{d}f}", 'cyan' if tp > 0 else None)
+def tp_colored(tp, l=7, d=2): return colored(f"{tp:<{l}.0{d}f}", 'cyan' if tp > 0 else None)
 
 def pnl_colored(pnl, l=7, d=3, alarm=False): return colored(f"{pnl:<{l}.0{d}f}", 'light_red' if pnl < 0 else 'green', attrs=(['blink'] if alarm else None))
 
@@ -61,14 +61,17 @@ def main():
 		session = HTTP(api_key=api_key, api_secret=api_secret)
 		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
 		positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
+		del session # unset, I do not know if it keeps connection or what ever
 	except Exception:
 		print('Sorry, read error, retry after sleep')
-		send_to_telegram(TMapiToken, TMchatID, 'Connection lost', print_exception=False)
+#		send_to_telegram(TMapiToken, TMchatID, 'Connection lost, retry after sleep', print_exception=False)
 		return
 
 	# start printout
 	os.system('clear')
-	print(f'{time_mark} {__part__}, Profit Alert: {min_PnL}%, all in USDT:')
+	mark_alert = ', alert if PnL'+colored(f"<{min_PnL}%", 'light_red') if min_PnL<0 else ""
+	mark_loss = ', kill if PnL'+colored(f"<{min_Loss}%", 'light_red') if min_Loss<0 else ""
+	print(f'{time_mark} {__part__}{mark_alert}{mark_loss}, all in USDT:')
 
 	# deposit margin
 	atype = depo['accountType']
@@ -94,6 +97,7 @@ def main():
 			symbolside = pos['symbol'] + pos['side']
 			val = float(pos['positionValue'] or 0)
 			prc = float(pos['markPrice'] or 0)
+			lvrg = float(pos['leverage'] or 0) # leverage = плечо
 			pnl = float(pos['unrealisedPnl'] or 0)
 			liq = float(pos['liqPrice'] or 0)
 			created = int(pos['createdTime'])
@@ -133,7 +137,7 @@ def main():
 			# gather positions here then sort by pnl and printout
 			coin_orders.append([
 				pnl,
-				f"{side} {symbol:12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{side} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, loosers first
@@ -151,7 +155,7 @@ def main():
 			for al in alarms_list:
 				message += f"\n{i}. {al}"
 				i += 1
-			send_to_telegram(TMapiToken, TMchatID, message)
+#			send_to_telegram(TMapiToken, TMchatID, message)
 
 	print()
 

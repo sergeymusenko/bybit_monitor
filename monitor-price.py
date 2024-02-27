@@ -30,7 +30,7 @@ from pybit.unified_trading import HTTP
 # get my secret LOCAL_CONFIG:
 import socket
 if socket.gethostname() == 'sereno':
-	from local_config import *
+	from config_local import *
 
 sleep_time = 60
 session = False
