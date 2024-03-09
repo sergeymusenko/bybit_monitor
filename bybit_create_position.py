@@ -13,10 +13,10 @@ symbol = "1000PEPEUSDT"
 side       = 1		# 1=Buy, -1=Sell
 posAmount  = 50		# full position amount
 leverage   = 15		#
+timeframe  = 1		# %% settings
 #####################
 marginMode = False	# 'ISOLATED_MARGIN'
 limitPrice = False	# "0.0088602" # set False to use "Market" order
-timeframe  = 1		#
 #####################
 
 if timeframe == 1: # for 1 min timeframe:
@@ -115,7 +115,7 @@ else:
 	print('Create Position on Market price:')
 
 try:
-	qty = str(int(posAmount / coinPrice) if roundTo <= 0 else round(posAmount / coinPrice, roundTo))
+	qty = int(posAmount / coinPrice) if roundTo <= 0 else round(posAmount / coinPrice, roundTo)
 	if side == 'Buy':
 		positionIdx = 1
 		takeProfit = round(coinPrice * (1 + TPpercent/100), priceRoundTo)
@@ -128,7 +128,7 @@ try:
 		trailingActiv = round(coinPrice * (1 - TPpercent/100/2), priceRoundTo)
 	trailingStop = round(abs(coinPrice - stopLoss), priceRoundTo)
 
-	print(f"\t{symbol=}\n\t{side=}\n\t{qty=}\n\t{coinPrice=}\n\t{posAmount=}\n\t{takeProfit=}\n\t{stopLoss=}\n\t{trailingStop=}\n\t{trailingActiv=}")
+	print(f"\t{symbol=}\n\t{side=}\n\t{qty=}\n\t{coinPrice=}\n\t{posAmount=}\n\t{takeProfit=}\n\t{stopLoss=}")
 #	exit(0)
 	res = session.place_order(
 		category = "linear",
@@ -137,7 +137,7 @@ try:
 		price = str(limitPrice),
 		side = side,
 		positionIdx = positionIdx, # 0: one way, 1: hedge-Buy, 2: hedge-Sell
-		qty = qty, # Perps/Futures/Option always use base coin as unit
+		qty = str(qty), # Perps/Futures/Option always use base coin as unit
 		takeProfit = str(takeProfit),
 		stopLoss = str(stopLoss),
 	)
