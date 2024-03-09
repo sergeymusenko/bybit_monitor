@@ -11,7 +11,7 @@ from pybit.unified_trading import HTTP
 symbol = "1000PEPEUSDT"
 #####################
 side       = 1		# 1=Buy, -1=Sell
-posAmount  = 5		# full position amount
+posAmount  = 50		# full position amount
 leverage   = 15		#
 #####################
 marginMode = False	# 'ISOLATED_MARGIN'
@@ -110,9 +110,9 @@ print(f"Get Instrument:\n\t{coinPrice=} (round={priceRoundTo})\n\t{minQty=}\n\tQ
 
 # 4. Create Order ====================================================================
 if limitPrice:
-	print(f'Create Order on Price={limitPrice}')
+	print(f'Create Order on Price={limitPrice}:')
 else:
-	print('Create Position on Market price')
+	print('Create Position on Market price:')
 
 try:
 	qty = str(int(posAmount / coinPrice) if roundTo <= 0 else round(posAmount / coinPrice, roundTo))
@@ -148,7 +148,7 @@ try:
 	if limitPrice:
 		exit(0) # TS not available for Limit order
 	else:
-		print(f"Set Trailing Stop:\n\tdistance={trailingStop}\n\tactiveate={trailingActiv}")
+		print(f"Set Trailing Stop:\n\tdistance={trailingStop:f}\n\tactiveate={trailingActiv}")
 	res = session.set_trading_stop(
 		category = "linear",
 		symbol = symbol,
