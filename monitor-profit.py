@@ -2,6 +2,7 @@
 """\
 monitor-profit.py - P&L at Bybit
 docs: https://bybit-exchange.github.io/docs/v5/intro
+works with Cross-Margin
 
 pip install pybit
 
@@ -11,7 +12,7 @@ server time error:
 """
 
 __project__	= "Trading Bot"
-__part__	= 'P&L @ Bybit' # Futures only
+__part__	= 'PnL @ Bybit' # Futures only
 __author__	= "Sergey V Musenko"
 __email__	= "sergey@musenko.com"
 __copyright__= "© 2024, musenko.com"
@@ -62,7 +63,6 @@ def main():
 		session = HTTP(api_key=api_key, api_secret=api_secret)
 		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
 		positions = session.get_positions(category="linear", settleCoin="USDT") # , symbol="XAIUSDT"
-		del session # unset, I do not know if it keeps connection or what ever
 	except Exception:
 		print('Sorry, read error, retry after sleep')
 #		send_to_telegram(TMapiToken, TMchatID, 'Connection lost, retry after sleep', print_exception=False)
@@ -187,6 +187,7 @@ def main():
 				i += 1
 			send_to_telegram(TMapiToken, TMchatID, message)
 
+	del session # unset, I do not know if it keeps connection or what ever
 	print()
 
 
