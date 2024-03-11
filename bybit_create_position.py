@@ -11,9 +11,9 @@ from pybit.unified_trading import HTTP
 symbol = "1000PEPEUSDT"
 #####################
 side       = 1		# 1=Buy, -1=Sell
-posAmount  = 50		# full position amount
+posAmount  = 150	# full position amount
 leverage   = 15		#
-timeframe  = 1		# %% settings
+timeframe  = 5		# %% settings
 #####################
 marginMode = False	# 'ISOLATED_MARGIN'
 limitPrice = False	# "0.0088602" # set False to use "Market" order
