@@ -21,33 +21,35 @@ print(f"{symbol}: {start=}, {getNlines=}, {linesLimit=}")
 
 session = HTTP()
 
-klistBuffer = []
+klineBuffer = []
 print('loading', end='', flush=True)
 while getNlines > 0:
 	print('.', end='', flush=True)
-	klist = session.get_kline(
+	# get data frame
+	kline = session.get_kline(
 		category='linear',
 		symbol=symbol,
-		start=start * 1000,
+		start=start * 1000, # ms needed
 		interval=interval,
 		limit=min(linesLimit, getNlines)
 	).get('result', None).get('list', None)
-	if not klist:
+	if not kline:
 		break
-	# from old to new
-	klist.reverse()
+	# sort from old to new
+	kline.reverse()
 	#	replace timestamp with date time
-	for i in range(len(klist)):
-		klist[i][0] = str(dt.datetime.fromtimestamp(int(klist[i][0])/1000))
+#	for i in range(len(kline)):
+#		kline[i][0] = str(dt.datetime.fromtimestamp(int(kline[i][0])/1000))
+	klineBuffer += kline
+	# next frame
 	start += linesLimit * interval * 60
-	klistBuffer += klist
 	getNlines -= linesLimit
 
 
-print(f"\r{console_CEOL}Done, klines number: {len(klistBuffer)}")
+print(f"\r{console_CEOL}Done, kline number: {len(klineBuffer)}")
 
-jsonObj = json.dumps(klistBuffer).replace("], [","],\n[")
-filename = f'{symbol}_klines.json'
+jsonObj = json.dumps(klineBuffer).replace("], [","],\n[")
+filename = f'{symbol}_kline.json'
 with open(filename, "w") as outfile:
 	outfile.write(jsonObj)
 	print(f"Saved to file: {filename}")
