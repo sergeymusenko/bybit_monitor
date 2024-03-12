@@ -146,7 +146,7 @@ def main():
 			# gather positions here then sort by pnl and printout
 			position_orders.append([
 				pnl,
-				f"{sidemark} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} {PnLp:>4.1f}% VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{sidemark} {symbol.replace('1000', '').lstrip('0'):10} PnL: {pnl_direction} {PnL} {PnLp:>4.1f}% VAL: {round(val, 2):<6.02f} PRC: {round(prc, 2):<6.02f} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, loosers first

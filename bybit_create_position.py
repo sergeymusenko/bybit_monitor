@@ -17,18 +17,19 @@ timeframe  = 1		# TP/SL %% settings
 #####################
 marginMode = False	# 'ISOLATED_MARGIN'
 limitPrice = False	# "0.0088602" # set False to use "Market" order
+setTS = False		#
 #####################
 
 if timeframe == 1: # for 1 min timeframe:
-	TPpercent = 1
-	SLpercent = 1
+	TPpercent = 1.4
+	SLpercent = 0.8
 
 elif timeframe == 5: # for 5 min timeframe:
 	TPpercent = 4
 	SLpercent = 1.2
 
 elif timeframe == 15: # for 15 min timeframe:
-	TPpercent = 9
+	TPpercent = 8
 	SLpercent = 3
 
 else:
@@ -126,6 +127,7 @@ try:
 		takeProfit = round(coinPrice * (1 - TPpercent/100), priceRoundTo)
 		stopLoss = round(coinPrice * (1 + SLpercent/100), priceRoundTo)
 		trailingActiv = round(coinPrice * (1 - TPpercent/100/2), priceRoundTo)
+#	trailingStop = round(abs(coinPrice - takeProfit) / 2, priceRoundTo)
 	trailingStop = round(abs(coinPrice - stopLoss), priceRoundTo)
 
 	print(f"\t{symbol=}\n\t{side=}\n\t{qty=}\n\t{coinPrice=}\n\t{posAmount=}\n\t{takeProfit=}\n\t{stopLoss=}")
@@ -145,7 +147,7 @@ try:
 		print(res)
 
 	# ...and set Trailing stop ==============================================================
-	if limitPrice:
+	if limitPrice or not setTS:
 		exit(0) # TS not available for Limit order
 	else:
 		print(f"Set Trailing Stop:\n\tdistance={trailingStop:f}\n\tactiveate={trailingActiv}")
@@ -154,7 +156,7 @@ try:
 		symbol = symbol,
 		positionIdx = positionIdx,
 		trailingStop = str(trailingStop),
-		activePrice = str(trailingActiv),
+#		activePrice = str(trailingActiv),
 	)
 	if res['retCode'] != 0:
 		print(res)

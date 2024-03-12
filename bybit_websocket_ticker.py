@@ -11,12 +11,12 @@ from datetime import datetime, timedelta
 from pybit.unified_trading import WebSocket
 
 printBuffer = { # limit by Pybit: 10 symbols; but you can subscribe more if use more ticker_stream() calls
-	"BTCUSDT":'',
-	"ETHUSDT":'',
-	"ATOMUSDT":'',
-	"DYDXUSDT":'',
-	"OPUSDT":'',
-	"DOTUSDT":'',
+	"BTCUSDT":	'',
+	"ETHUSDT":	'',
+	"ATOMUSDT":	'',
+	"DYDXUSDT":	'',
+	"OPUSDT":	'',
+	"DOTUSDT":	'',
 	"1000PEPEUSDT":'',
 }
 
