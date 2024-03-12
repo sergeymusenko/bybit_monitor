@@ -101,7 +101,8 @@ def main():
 			val = float(pos['positionValue'] or 0)
 			prc = float(pos['markPrice'] or 0)
 			lvrg = float(pos['leverage'] or 0) # leverage = плечо
-			pnl = float(pos['unrealisedPnl'] or 0)
+			rpnl = float(pos['curRealisedPnl'] or 0)
+			pnl = rpnl + float(pos['unrealisedPnl'] or 0) # includes start commission
 			liq = float(pos['liqPrice'] or 0)
 			created = int(pos['createdTime'])
 			posIdx = pos['positionIdx'] # needed to close pos on loss
@@ -137,15 +138,15 @@ def main():
 				close_list.append([symbol, side, posIdx, pnl])
 
 			PnL = pnl_colored(pnl, 8, 3, pnl < pnl_alarm)
-			rpnl = float(pos['cumRealisedPnl'] or 0)
 			liq = liq_colored(round(liq, 2), alarm=liq_alarm)
 			tp = tp_colored(round(float(pos['takeProfit'] or 0), 2))
 			sl = liq_colored(round(float(pos['stopLoss'] or 0), 2))
+			PnLp = round(100 * pnl / val, 1)
 
 			# gather positions here then sort by pnl and printout
 			position_orders.append([
 				pnl,
-				f"{sidemark} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
+				f"{sidemark} {symbol.replace('1000', '').lstrip('0'):12} PnL: {pnl_direction} {PnL} {PnLp:>4.1f}% VAL: {round(val, 2):<8.02f} PRC: {round(prc, 2):<7.02f} LIQ: {liq} TP: {tp} SL: {sl}"
 			])
 
 		# print out sorted, loosers first

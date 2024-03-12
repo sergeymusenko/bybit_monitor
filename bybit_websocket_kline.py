@@ -5,11 +5,10 @@
 
 from config_local import *
 from termcolor import colored
+from ansictrls import *
 from time import sleep
 from datetime import datetime, timedelta
 from pybit.unified_trading import WebSocket
-console_CEOL = '\033[2K'
-console_UP = '\033[2A'
 
 interval = 1
 printBuffer = { # limit by Pybit: 10 symbols; but you can subscribe more if use more ticker_stream() calls
@@ -19,17 +18,16 @@ printBuffer = { # limit by Pybit: 10 symbols; but you can subscribe more if use 
 	"DYDXUSDT":'',
 	"OPUSDT":'',
 	"DOTUSDT":'',
+	"1000PEPEUSDT":'',
 }
 
 # print several lines
 def print_out(up=True):
 	lines = len(printBuffer)
-	while up and lines > 0:
-		print(console_UP)
-		lines -= 1
+	if up and lines > 1: print_ANSIctrl('CPL', lines)
 	i = 1
 	for line in printBuffer:
-		print(f"{console_CEOL}{i}. " + printBuffer[line])
+		print(get_ANSIctrl('EL') + f"{i}. " + printBuffer[line])
 		i += 1
 
 color = None
@@ -48,7 +46,8 @@ def handle_message(message):
 	# print out
 	delta = cls - opn
 	color = 'red' if delta < 0 else "green" if delta > 0 else None
-	printBuffer[symbol] = f"{dt} {colored(f'{symbol:12}', color)} O:{opn:<8.02f} C:{cls:<8.02f} H:{hig:<8.02f} L:{low:<8.02f} V:{vol:<8.02f}"
+	sy = symbol.replace('1000', '').lstrip('0')
+	printBuffer[symbol] = f"{dt} {colored(f'{sy:12}', color)} O:{opn:<8.02f} C:{cls:<8.02f} H:{hig:<8.02f} L:{low:<8.02f} V:{vol:<8.02f}"
 
 # create websocket
 try:
@@ -67,12 +66,16 @@ ws.kline_stream(
     callback = handle_message
 )
 
+print_ANSIctrl('HCU')
 print('kline_stream:')
+
 print_out(False)
+
 while True:
 	try:
 		sleep(0.5)
 		print_out()
 	except KeyboardInterrupt: # exit on Ctrl+C
 		print("\rBye...")
+		print_ANSIctrl('SCU')
 		break
