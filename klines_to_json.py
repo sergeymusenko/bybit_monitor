@@ -12,7 +12,7 @@ from pybit.unified_trading import HTTP
 
 symbol = '1000PEPEUSDT'
 interval = 1 # 1,3,5,15,30,60,120,240,360,720,D,M,W
-getLastHours = 24 # get last N hours
+getLastHours = 2 * 24 # get last N hours
 linesLimit = 1000 # data frame size, no more then 1000! API limit: [1, 1000]
 
 SMA1len = 30
