@@ -12,7 +12,7 @@ from pybit.unified_trading import HTTP
 
 symbol = '1000PEPEUSDT'
 interval = 1 # 1,3,5,15,30,60,120,240,360,720,D,M,W
-getLastHours = 2 # get last N hours
+getLastHours = 24 # get last N hours
 linesLimit = 1000 # data frame size, no more then 1000! API limit: [1, 1000]
 
 SMA1len = 30
@@ -87,8 +87,6 @@ if __name__ == '__main__':
 			# make source vals as float
 			tmp = list(map(float, kl))
 			tmp[0] = int(tmp[0]/1000) # timestamp is int
-			# save datetime as string as [7]
-			tmp.append(str(dt.datetime.fromtimestamp(tmp[0])))
 			# save kline
 			klineBuffer.append(tmp)
 		del kline
@@ -99,9 +97,13 @@ if __name__ == '__main__':
 		frames += 1
 		sleep(0.1)
 
+	'''
 	# klineBuffer is loaded, ADD INDICATORS!
 	for i in range(len(klineBuffer)):
 		tmp = klineBuffer[i]
+
+		# save datetime as string as [7]
+		tmp.append(str(dt.datetime.fromtimestamp(tmp[0])))
 
 		# current prices
 		highPrice = tmp[2]
@@ -167,13 +169,15 @@ if __name__ == '__main__':
 			tmp.append([bbSMAlower, bbSMAmiddle, bbSMAupper])
 
 		# save indicators
-		tmp.append('NL')
+		# tmp.append('NL')
 		klineBuffer[i] = tmp
+	'''
 
 	print(f"\r{get_ANSIctrl('EL')}Done, kline number: {len(klineBuffer)}, {frames=}")
 
 	# save to file
-	jsonObj = json.dumps(klineBuffer).replace(', "NL"], ',"],\n").replace(', "NL"]',"]")
+	jsonObj = json.dumps(klineBuffer).replace('], [',"],\n[")
+#	jsonObj = json.dumps(klineBuffer).replace(', "NL"], ',"],\n").replace(', "NL"]',"]")
 	filename = f'{symbol}_kline.json'
 	with open(filename, "w") as outfile:
 		outfile.write(jsonObj)

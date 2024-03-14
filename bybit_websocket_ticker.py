@@ -18,6 +18,7 @@ printBuffer = { # limit by Pybit: 10 symbols; but you can subscribe more if use 
 	"OPUSDT":	'',
 	"DOTUSDT":	'',
 	"1000PEPEUSDT":'',
+	"IMXUSDT":'',
 }
 
 # print several lines
