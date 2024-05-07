@@ -27,6 +27,12 @@ def input_timeout(timeout=1):
 	if key == 0 and pre_esc: # pure Esc key
 		key = 27
 	return key
+
+def round_floor(val, decimals=0):
+	deciamls = min(decimals, 10)
+	factor = 1 / (10** decimals)
+	return (val // factor) * factor
+
 #class InputTimedOut(Exception): pass
 def inputTimeOutHandler(signum, frame): pass # raise InputTimedOut
 signal.signal(signal.SIGALRM, inputTimeOutHandler)

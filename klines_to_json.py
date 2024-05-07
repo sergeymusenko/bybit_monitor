@@ -12,7 +12,7 @@ from pybit.unified_trading import HTTP
 
 symbol = '1000PEPEUSDT'
 interval = 1 # 1,3,5,15,30,60,120,240,360,720,D,M,W
-getLastHours = 2 * 24 # get last N hours
+getLastHours = 1 * 24 # get last N hours
 linesLimit = 1000 # data frame size, no more then 1000! API limit: [1, 1000]
 
 SMA1len = 30
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 	# save to file
 	jsonObj = json.dumps(klineBuffer).replace('], [',"],\n[")
 #	jsonObj = json.dumps(klineBuffer).replace(', "NL"], ',"],\n").replace(', "NL"]',"]")
-	filename = f'{symbol}_kline.json'
+	filename = f'{symbol}_{interval}.json'
 	with open(filename, "w") as outfile:
 		outfile.write(jsonObj)
 		print(f"Saved to file: {filename}")

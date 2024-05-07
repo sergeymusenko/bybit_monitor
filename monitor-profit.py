@@ -58,7 +58,7 @@ def main():
 
 	print(f'{"  loading...":40}\r', end='', flush=True)
 
-	# GET PSITIONS (category: spot, linear, inverse, option)
+	# GET POSITIONS (category: spot, linear, inverse, option)
 	try:
 		session = HTTP(api_key=api_key, api_secret=api_secret)
 		depo = session.get_wallet_balance(accountType="UNIFIED")['result']['list'][0] # , coin="BTC"
@@ -179,6 +179,9 @@ def main():
 				try:
 					################### kill position
 					session.place_order(category="linear", symbol=symbol, side=side, positionIdx=positionIdx, orderType="Market", qty="0", reduceOnly=True)
+					''' Azzrael, in according to a docs pass these 3:
+						qty=0.0, reduceOnly=True, closeOnTrigger=True
+					'''
 					###################
 					print(colored('closed', 'red'))
 					message += "closed"

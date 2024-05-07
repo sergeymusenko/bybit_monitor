@@ -15,11 +15,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-symbol = '1000PEPE'
-klinesJson = f'{symbol}USDT_kline.json'
+symbol = 'DOGE'
+interval = 1
+klinesJson = f'{symbol}USDT_{interval}.json'
 klineNames = ['startTime', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 'volume', 'turnover']
-SMA1len = 30
-SMA2len = 100
+SMA1len = 8 # 30
+SMA2len = 32 # 100
 
 
 # fine print mouse coordinates
@@ -76,18 +77,17 @@ klines.columns = klineNames
 klines['datetime'] = pd.to_datetime(klines['startTime'], unit='s') # .dt.time
 # initial data ready
 
-# base graph style
-#print(plt.style.available)
+# base graph style: print(plt.style.available)
 plt.style.use('dark_background') # 'seaborn-v0_8-darkgrid') #'fivethirtyeight')
 for param in ['figure.facecolor', 'axes.facecolor', 'savefig.facecolor']: 
 	plt.rcParams[param] = '#212946'  # bluish dark grey
 for param in ['text.color', 'axes.labelcolor', 'xtick.color', 'ytick.color']:
 	plt.rcParams[param] = '0.9'  # very light grey
 plt.rcParams.update({"axes.grid" : True, "grid.color": "#444455"})
-fig = plt.figure(figsize=(12, 8), label=symbol)
+fig = plt.figure(figsize=(12, 8), label=f"{symbol}USDT")
 
 # Symbol plot
-plt.plot(klines['closePrice'], label=symbol, linewidth=1, color='#0055ff', alpha=0.5)
+plt.plot(klines['closePrice'], label=symbol, linewidth=1, color='#00ff55', alpha=0.5)
 #plt.xticks(klines.index, klines['datetime'].values, rotation=45, fontsize=9)
 #plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=60))
 plt.xlabel('Date')
@@ -111,7 +111,9 @@ plt.scatter(klines.index, klines['sell'], label="Sell", color='#ff5500', marker=
 
 plt.gca().format_coord = format_coord # show mouse coordinates
 plt.legend(loc=('upper left'))
+plt.tight_layout()
 # all done
+plt.get_current_fig_manager().full_screen_toggle()
 plt.show()
 
 
